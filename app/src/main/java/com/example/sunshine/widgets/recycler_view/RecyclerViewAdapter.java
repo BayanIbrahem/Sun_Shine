@@ -1,32 +1,22 @@
 package com.example.sunshine.widgets.recycler_view;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.Icon;
-import android.text.Layout;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.sunshine.R;
+import com.example.sunshine.data.one_call_api.CurrentData;
+import com.example.sunshine.data.one_call_api.DailyDataEntry;
 import com.example.sunshine.data.one_call_api.RawDataEntry;
-import com.example.sunshine.data.one_call_api.WeatherDataInfo;
-
+import com.example.sunshine.enums.DataType;
 import java.util.List;
-import java.util.function.BiConsumer;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>{
+  public DataType dataType;
   private int itemsNum;
   private List<RawDataEntry> itemsData;
   private ItemClickListener adapterItemClickListener;
@@ -34,6 +24,9 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     this.itemsData = itemsData;
     this.itemsNum = this.itemsData.size();
     this.adapterItemClickListener = listener;
+    if(itemsData != null){
+      setDataType();
+    }
   }
 
   @NonNull
@@ -48,12 +41,28 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
   @Override
   public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    if(itemsData != null){
+      setDataType();
+    }
     holder.bind(itemsData.get(position));
   }
 
   @Override
   public int getItemCount() {
     return itemsNum;
+  }
+
+  //private methods:
+  private void setDataType(){
+    if(itemsData.get(0).getClass() == DailyDataEntry.class){
+      dataType = DataType.DAILY;
+    }
+    else if(itemsData.get(0).getClass() == CurrentData.class){
+      dataType = DataType.CURRENT;
+    }
+    else if(itemsData.get(0).getClass() == RawDataEntry.class){
+      dataType = DataType.HOURLY;
+    }
   }
 
   protected class ViewHolder extends RecyclerView.ViewHolder{

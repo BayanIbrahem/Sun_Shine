@@ -1,8 +1,6 @@
 package com.example.sunshine;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -10,8 +8,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,18 +15,14 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.sunshine.data.one_call_api.RawDataEntry;
 import com.example.sunshine.data.one_call_api.WeatherDataInfo;
-import com.example.sunshine.enums.Values;
+import com.example.sunshine.enums.DataType;
 import com.example.sunshine.enums.states.RefreshState;
-import com.example.sunshine.helper_classes.NeededValues;
 import com.example.sunshine.networking.*;
 import com.example.sunshine.widgets.recycler_view.RecyclerViewAdapter;
 import com.example.sunshine.widgets.recycler_view.WeatherDataViewModel;
 
 import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
   //recyclerView variables
@@ -62,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
       updateUi();
     });
     setRecyclerViewOptions();
-    initIntentWithBundle();
+    initIntent();
   }
 
   @Override
@@ -153,12 +145,17 @@ public class MainActivity extends AppCompatActivity {
     setRecyclerViewDependencies();
   }
 
-  private void initIntentWithBundle(){
+  private void initIntent() {
     //intent:
     activitySwapIntent = new Intent(this, DetailedWeatherDataActivity.class);
+  }
+  private void prepareIntentMessage(int index, DataType type_of_data){
+    //single item of weather data.
+    Serializable intentValue = weatherDataViewModel.getLiveWeatherData().getValue().getHourlyData().get(index);
+    activitySwapIntent.putExtra(Constants.WEATHER_DATA_INTENT_KEY, intentValue);
+    activitySwapIntent.putExtra(Constants.WEATHER_TYPE_INTENT_KEY, type_of_data);
     //TODO: set intent message
   }
-
   //private classes:
   private class AutomatedToast {
     private Toast toast;
@@ -206,6 +203,7 @@ public class MainActivity extends AppCompatActivity {
   private class ClickListener implements RecyclerViewAdapter.ItemClickListener {
     @Override
     public void ItemClick(int position) {
+      prepareIntentMessage(position, recyclerViewAdapter.dataType);
       startActivity(activitySwapIntent);
     }
   }

@@ -2,59 +2,58 @@ package com.example.sunshine;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.sunshine.data.one_call_api.DailyDataEntry;
 import com.example.sunshine.data.one_call_api.RawDataEntry;
+import com.example.sunshine.enums.DataType;
 
 public class DetailedWeatherDataActivity extends AppCompatActivity {
-  //constants:
-  public static class Constants{
-    public static final int VISIBLE_VIEW = View.VISIBLE;      //0
-    public static final int INVISIBLE_VIEW = View.INVISIBLE;  //4
-    public static final int GONE_VIEW_VISIBILITY = View.GONE; //8
-  }
   //textViews:
-  private TextView dateTextView;
-  private TextView mainStateTextView;
-  private TextView descriptionTextView;
   private TextView avgTempTextView;
+  private TextView cloudsTextView;
+  private TextView dateTextView;
+  private TextView dayFeelingTempTextView;
+  private TextView dayTempTextView;
+  private TextView descriptionTextView;
+  private TextView eveningFeelingTempTextView;
+  private TextView eveningTempTextView;
+  private TextView humidityTextView;
+  private TextView mainStateTextView;
   private TextView maxTempTextView;
   private TextView minTempTextView;
-  private TextView dayTempTextView;
-  private TextView dayFeelingTempTextView;
-  private TextView nightTempTextView;
-  private TextView nightFeelingTempTextView;
-  private TextView morningTempTextView;
   private TextView morningFeelingTempTextView;
-  private TextView eveningTempTextView;
-  private TextView eveningFeelingTempTextView;
+  private TextView morningTempTextView;
+  private TextView nightFeelingTempTextView;
+  private TextView nightTempTextView;
   private TextView pressureTextView;
-  private TextView humidityTextView;
-  private TextView windLabelTextView;
-  private TextView windSpeedTextView;
+  private TextView rainTextView;
   private TextView windDegreeTextView;
   private TextView windGustTextView;
-  private TextView cloudsTextView;
-  private TextView rainTextView;
+  private TextView windLabelTextView;
+  private TextView windSpeedTextView;
   //icons:
   private ImageView backgroundImage;
   //buttons:
   private ImageButton expandTempInfoButton;
-
   //flags:
   private boolean isExtraTempInfoCollapsed = true;
   //data:
-  RawDataEntry weatherDetailedData;
+  private RawDataEntry weatherDetailedData;
+  //data_type:
+  private DataType data_type;
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_detailed_weather_data);
     initTextViewInOnCreate();
     initOtherUiWidgets();
+    getIntentMessageValue();
     setWidgetsResources();
     getIntentData();
     setExpandButtonClickAction();
@@ -62,65 +61,123 @@ public class DetailedWeatherDataActivity extends AppCompatActivity {
   //private methods:
   //initialisation:
   private void initTextViewInOnCreate(){
-    dateTextView = findViewById(R.id.details_tv_date);
-    mainStateTextView = findViewById(R.id.details_tv_mainState);
-    descriptionTextView = findViewById(R.id.details_tv_weatherDetailsInfo);
     avgTempTextView = findViewById(R.id.details_tv_avgTemp);
+    cloudsTextView = findViewById(R.id.details_tv_clouds);
+    dateTextView = findViewById(R.id.details_tv_date);
+    dayFeelingTempTextView = findViewById(R.id.details_tv_feelingDayTemp);
+    dayTempTextView = findViewById(R.id.details_tv_dayTemp);
+    descriptionTextView = findViewById(R.id.details_tv_weatherDetailsInfo);
+    eveningFeelingTempTextView = findViewById(R.id.details_tv_feelingEviningTemp);
+    eveningTempTextView = findViewById(R.id.details_tv_eveningTemp);
+    humidityTextView = findViewById(R.id.details_tv_humidity);
+    mainStateTextView = findViewById(R.id.details_tv_mainState);
     maxTempTextView = findViewById(R.id.details_tv_maxTemp);
     minTempTextView = findViewById(R.id.details_tv_minTemp);
-    dayTempTextView = findViewById(R.id.details_tv_dayTemp);
-    dayFeelingTempTextView = findViewById(R.id.details_tv_feelingDayTemp);
-    nightTempTextView = findViewById(R.id.details_tv_nightTemp);
-    nightFeelingTempTextView = findViewById(R.id.details_tv_feelingNightTemp);
-    morningTempTextView = findViewById(R.id.details_tv_morningTemp);
     morningFeelingTempTextView = findViewById(R.id.details_tv_feelingMorningTemp);
-    eveningTempTextView = findViewById(R.id.details_tv_eveningTemp);
-    eveningFeelingTempTextView = findViewById(R.id.details_tv_feelingEviningTemp);
+    morningTempTextView = findViewById(R.id.details_tv_morningTemp);
+    nightFeelingTempTextView = findViewById(R.id.details_tv_feelingNightTemp);
+    nightTempTextView = findViewById(R.id.details_tv_nightTemp);
     pressureTextView = findViewById(R.id.details_tv_pressure);
-    humidityTextView = findViewById(R.id.details_tv_humidity);
-    windLabelTextView = findViewById(R.id.details_tv_wind);
-    windSpeedTextView = findViewById(R.id.details_tv_windSpeed);
+    rainTextView = findViewById(R.id.details_tv_rain);
     windDegreeTextView = findViewById(R.id.details_tv_windDegree);
     windGustTextView = findViewById(R.id.details_tv_windGust);
-    cloudsTextView = findViewById(R.id.details_tv_clouds);
-    rainTextView = findViewById(R.id.details_tv_rain);
+    windLabelTextView = findViewById(R.id.details_tv_wind);
+    windSpeedTextView = findViewById(R.id.details_tv_windSpeed);
   }
   private void initOtherUiWidgets(){
     backgroundImage = findViewById(R.id.details_image_backgroundImage);
     expandTempInfoButton = findViewById(R.id.details_button_expandTemp);
+  }
+  private void getIntentMessageValue(){
+    Intent intent = getIntent();
+    weatherDetailedData = (RawDataEntry) intent.getSerializableExtra(Constants.WEATHER_DATA_INTENT_KEY);
+    data_type = (DataType)intent.getSerializableExtra(Constants.WEATHER_TYPE_INTENT_KEY);
   }
   private void setWidgetsResources(){
     setTempWidgetsResources();
     setOtherWidgetsResources();
   }
   private void setTempWidgetsResources(){
-    avgTempTextView.setText("");
-    maxTempTextView.setText("");
-    minTempTextView.setText("");
-    dayTempTextView.setText("");
-    dayFeelingTempTextView.setText("");
-    nightTempTextView.setText("");
-    nightFeelingTempTextView.setText("");
-    morningTempTextView.setText("");
-    morningFeelingTempTextView.setText("");
-    eveningTempTextView.setText("");
-    eveningFeelingTempTextView.setText("");
+    if(data_type == DataType.HOURLY){
+      actionWithHourlyType();
+    }
+    else if(data_type == DataType.CURRENT){
+      actionWithCurrentType();
+    }
+    else if(data_type == DataType.DAILY){
+      actionWithDailyType();
+    }
+
+  }
+  private void actionWithHourlyType(){
+
+    avgTempTextView.append(String.valueOf(weatherDetailedData.getTemp()));
+    dayFeelingTempTextView.setVisibility(View.GONE);
+    dayTempTextView.setVisibility(View.GONE);
+    eveningFeelingTempTextView.setVisibility(View.GONE);
+    eveningTempTextView.setVisibility(View.GONE);
+    maxTempTextView.setVisibility(View.GONE);
+    minTempTextView.setVisibility(View.GONE);
+    morningFeelingTempTextView.setVisibility(View.GONE);
+    morningTempTextView.setVisibility(View.GONE);
+    nightFeelingTempTextView.setVisibility(View.GONE);
+    nightTempTextView.setVisibility(View.GONE);
+  }
+  private void actionWithCurrentType(){
+    //TODO: add sun set and sun rise.
+    //they any approximately the same
+    actionWithHourlyType();
+  }
+  private void actionWithDailyType(){
+    DailyDataEntry dailyTypeFormattedData= (DailyDataEntry) weatherDetailedData;
+    //abbreviation
+    final DailyDataEntry d = dailyTypeFormattedData;
+    dayFeelingTempTextView.append    (String.valueOf(d.getFeelingTemp() +
+                                      String.valueOf(d.getTempUnitChar())));
+
+    dayTempTextView.append           (String.valueOf(d.getDay_temp() +
+                                      String.valueOf(d.getTempUnitChar())));
+
+    eveningFeelingTempTextView.append(String.valueOf(d.getEvening_feeling_temp() +
+                                      String.valueOf(d.getTempUnitChar())));
+
+    eveningTempTextView.append       (String.valueOf(d.getEvening_temp() +
+                                      String.valueOf(d.getTempUnitChar())));
+
+    maxTempTextView.append           (String.valueOf(d.getMax_temp() +
+                                      String.valueOf(d.getTempUnitChar())));
+
+    minTempTextView.append           (String.valueOf(d.getMin_temp() +
+                                      String.valueOf(d.getTempUnitChar())));
+
+    morningFeelingTempTextView.append(String.valueOf(d.getMorning_feeling_temp() +
+                                      String.valueOf(d.getTempUnitChar())));
+
+    morningTempTextView.append       (String.valueOf(d.getMorning_temp() +
+                                      String.valueOf(d.getTempUnitChar())));
+
+    nightFeelingTempTextView.append  (String.valueOf(d.getNight_feeling_temp() +
+                                      String.valueOf(d.getTempUnitChar())));
+
+    nightTempTextView.append         (String.valueOf(d.getNight_temp() +
+                                      String.valueOf(d.getTempUnitChar())));
   }
   private void setOtherWidgetsResources(){
+    //abbreviation
+    final RawDataEntry w = weatherDetailedData;
     //main resources:
-    dateTextView.setText("");
-    mainStateTextView.setText("");
-    descriptionTextView.setText("");
+    dateTextView.append(String.valueOf(w.getDate()));
+    descriptionTextView.append(String.valueOf(w.getDescription()));
+    mainStateTextView.append(String.valueOf(w.getState()));
 
     //details resources:
-    pressureTextView.setText("");
-    humidityTextView.setText("");
-    windLabelTextView.setText("");
-    windSpeedTextView.setText("");
-    windDegreeTextView.setText("");
-    windGustTextView.setText("");
-    cloudsTextView.setText("");
-    rainTextView.setText("");
+    cloudsTextView.append(String.valueOf(w.getCloud()));
+    humidityTextView.append(String.valueOf(w.getHumidity()));
+    pressureTextView.append(String.valueOf(w.getPressure()));
+    rainTextView.append(String.valueOf(w.getRain()));
+    windSpeedTextView.append(String.valueOf(w.getWind_speed()) + "km/h");
+    windDegreeTextView.append(String.valueOf(w.getWind_degree()));
+    windGustTextView.append(String.valueOf(w.getWind_gust()));
     //icons:
     backgroundImage.setImageResource(weatherDetailedData.getIconId());
   }

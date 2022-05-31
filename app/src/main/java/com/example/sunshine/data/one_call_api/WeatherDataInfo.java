@@ -1,14 +1,19 @@
 package com.example.sunshine.data.one_call_api;
 
+import android.os.Parcelable;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.example.sunshine.enums.Values;
 import com.example.sunshine.helper_classes.NeededValues;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WeatherDataInfo {
+public class WeatherDataInfo implements Serializable {
   private double latitude;
   private double longitude;
   private String timezone;
@@ -264,5 +269,28 @@ public class WeatherDataInfo {
 
   public void setTempUnit(Values.Unit tempUnit) {
     this.tempUnit = tempUnit;
+  }
+  //Serializable methods:
+  @Override
+  public int hashCode() {
+    //TODO: make hashCode method
+    return super.hashCode();
+  }
+
+  @Override
+  public boolean equals(@Nullable Object obj) {
+    //TODO: make equals method.
+    return super.equals(obj);
+  }
+
+  @NonNull
+  @Override
+  protected Object clone() throws CloneNotSupportedException {
+    return super.clone();
+  }
+
+  @Override
+  protected void finalize() throws Throwable {
+    super.finalize();
   }
 }

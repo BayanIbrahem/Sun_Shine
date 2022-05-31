@@ -7,7 +7,9 @@ import com.example.sunshine.R;
 import com.example.sunshine.enums.Values;
 import com.example.sunshine.enums.DataType;
 
-public class RawDataEntry implements Cloneable{
+import java.io.Serializable;
+
+public class RawDataEntry implements Cloneable, Serializable {
   private DataType dataType;
   private boolean completed;
   //query info:
@@ -81,6 +83,17 @@ public class RawDataEntry implements Cloneable{
 
   public Values.Unit getTempUnit(){
     return tempUnit;
+  }
+  public char getTempUnitChar(){
+    switch (tempUnit){
+      case CELSIUS:
+        return 'C';
+      case FAHRENHEIT:
+        return 'F';
+      case KELVIN:
+        return 'K';
+    }
+    return '?';
   }
   public void setTempUnit(Values.Unit unit){
     this.tempUnit = unit;

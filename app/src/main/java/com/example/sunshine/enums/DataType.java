@@ -1,8 +1,12 @@
 
 package com.example.sunshine.enums;
 
-public enum DataType {
+import java.io.Serializable;
+
+public enum DataType implements Serializable {
   CURRENT,
+  MINUTELY,
   HOURLY,
   DAILY,
+  ALERTS,
 }
