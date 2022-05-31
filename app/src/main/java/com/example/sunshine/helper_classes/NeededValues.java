@@ -5,7 +5,7 @@ import com.example.sunshine.enums.Values;
 /**
  * this class detemine the needed boolean values for the request.
  * */
-public class NeededValues {
+public class NeededValues implements Cloneable{
   private boolean current;
   private boolean minutely;
   private boolean hourly;
@@ -73,5 +73,18 @@ public class NeededValues {
 
   public void setUnit(Values.Unit unit) {
     this.unit = unit;
+  }
+  public NeededValues clone(){
+    try {
+      return (NeededValues) super.clone();
+    } catch (CloneNotSupportedException e) {
+      return new NeededValues(
+          this.current,
+          this.minutely,
+          this.hourly,
+          this.daily,
+          this.unit
+      ) ;
+    }
   }
 }

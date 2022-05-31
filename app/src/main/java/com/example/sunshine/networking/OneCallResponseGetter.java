@@ -20,11 +20,11 @@ import java.io.InputStream;
 import java.net.URL;
 
 public class OneCallResponseGetter extends ResponseGetter<WeatherDataInfo> {
-  private WeatherDataInfo data;
+  private WeatherDataInfo formattedData;
   public OneCallResponseGetter(URL url){
     super(url);
     Log.println(Log.DEBUG, "URL:", this.url.toString());
-    data = new WeatherDataInfo();
+    formattedData = new WeatherDataInfo();
   }
 
   /**return the formatted final data, nullable*/
@@ -35,23 +35,23 @@ public class OneCallResponseGetter extends ResponseGetter<WeatherDataInfo> {
       return null;
     }
     if(jsonData == null){
-      return data;
+      return formattedData;
     }
     try {
       double latitude = jsonData.getDouble("lat");
       double longitude = jsonData.getDouble("lon");
       String timezone = jsonData.getString("timezone");
       int timezone_offset = jsonData.getInt("timezone_offset");
-      data.setLatitude(latitude);
-      data.setLongitude(longitude);
-      data.setTimezone(timezone);
-      data.setTimezone_offset(timezone_offset);
+      formattedData.setLatitude(latitude);
+      formattedData.setLongitude(longitude);
+      formattedData.setTimezone(timezone);
+      formattedData.setTimezone_offset(timezone_offset);
     } catch (JSONException e) {
       e.printStackTrace();
       Log.d("Fail to parse json full data: ", "can not get general data");
       Data_State_History.generalData = DataState.ParseJson.CANNOT_PARSE_JSON_GENERAL_DATA;
     }
-    if(data.isNeedCurrentData()){
+    if(formattedData.isNeedCurrentData()){
       try {
         JSONObject currentJson = jsonData.getJSONObject("current");
         long sunrise = currentJson.getLong("sunrise");
@@ -59,15 +59,15 @@ public class OneCallResponseGetter extends ResponseGetter<WeatherDataInfo> {
         CurrentData currentData =(CurrentData) fillSharedData(currentJson, DataType.CURRENT, "current");
         currentData.setSunrise(sunrise);
         currentData.setSunset(sunset);
-        this.data.setCurrentData(currentData);
-        this.data.setCurrentDataState(true);
+        this.formattedData.setCurrentData(currentData);
+        this.formattedData.setCurrentDataState(true);
       } catch (JSONException e) {
         e.printStackTrace();
         Log.d("Fail to parse json full data: ", "can not get current data");
         Data_State_History.currentData = DataState.ParseJson.CANNOT_PARSE_JSON_CURRENT_DATA;
       }
     }
-    if(data.isNeedMinutelyData()){
+    if(formattedData.isNeedMinutelyData()){
       try {
         JSONArray minutelyJsonArray = jsonData.getJSONArray("minutely");
         MinutelyData minutelyData = new MinutelyData();
@@ -77,29 +77,29 @@ public class OneCallResponseGetter extends ResponseGetter<WeatherDataInfo> {
           int precipitation = item.getInt("precipitation");
           minutelyData.addToItems(date, precipitation);
         }
-        data.setMinutelyData(minutelyData);
-        data.setMinutelyDataState(true);
+        formattedData.setMinutelyData(minutelyData);
+        formattedData.setMinutelyDataState(true);
       } catch (JSONException e) {
         e.printStackTrace();
         Log.d("Fail to parse json full data: ", "can not get minutely data");
         Data_State_History.minutelyData = DataState.ParseJson.CANNOT_PARSE_JSON_MINUTELY_DATA;
       }
     }
-    if(data.isNeedHourlyData()){
+    if(formattedData.isNeedHourlyData()){
       try {
         JSONArray hourlyJson = jsonData.getJSONArray("hourly");
         for(int i=0; i<hourlyJson.length(); i++){
           JSONObject hourlyJsonJSONObject = hourlyJson.getJSONObject(i);
-          data.appendHourlyData(fillSharedData(hourlyJsonJSONObject, DataType.HOURLY, "hourly"));
+          formattedData.appendHourlyData(fillSharedData(hourlyJsonJSONObject, DataType.HOURLY, "hourly"));
         }
-        data.setHourlyDataState(true);
+        formattedData.setHourlyDataState(true);
       } catch (JSONException e) {
         e.printStackTrace();
         Log.d("Fail to parse json full data: ", "can not get hourly data");
         Data_State_History.hourlyData = DataState.ParseJson.CANNOT_PARSE_JSON_HOURLY_DATA;
       }
     }
-    if(data.isNeedDailyData()){
+    if(formattedData.isNeedDailyData()){
       try {
         JSONArray dailyData = jsonData.getJSONArray("daily");
         for(int i=0; i<dailyData.length(); i++){
@@ -131,16 +131,17 @@ public class OneCallResponseGetter extends ResponseGetter<WeatherDataInfo> {
 
           //additional data:
           dailyDataEntry.setRain(dailyJsonObject.getDouble("rain"));
-          data.appendDailyData(dailyDataEntry);
+          formattedData.appendDailyData(dailyDataEntry);
         }
-        data.setDailyDataState(true);
+        formattedData.setDailyDataState(true);
       } catch (JSONException e) {
         e.printStackTrace();
         Log.d("Fail to parse json full data: ", "can not get daily data");
         Data_State_History.dailyData = DataState.ParseJson.CANNOT_PARSE_JSON_DAILY_DATA;
       }
     }
-    return data;
+    Log.println(Log.DEBUG, "Response getter, ", "data value \n" + formattedData.toString());
+    return formattedData;
   }
 
   /**fill the shared data in daily, current and hourly data, it is not null, but may cause class cast exception*/
@@ -199,7 +200,7 @@ public class OneCallResponseGetter extends ResponseGetter<WeatherDataInfo> {
   }
   /**just specify the data types that we need*/
   public void setNeededData(NeededValues values){
-    data.setNeededData(values);
+    formattedData.setNeededData(values);
   }
 }
 

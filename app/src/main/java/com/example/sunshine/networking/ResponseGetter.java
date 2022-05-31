@@ -61,7 +61,7 @@ public abstract class ResponseGetter<Type> {
   }
   /** convert the binary response to String, not null*/
   protected String getString(InputStream result){
-    Log.d("INPUT_STREAM", String.valueOf(result == null));
+    Log.println(Log.DEBUG, "INPUT_STREAM", String.valueOf(result == null));
     if(result == null){
       Data_State_History.dataState = DataState.NULL_INPUT_STREAM;
       return "{\"connection_error\": \"fail to get response...\"}";
@@ -70,7 +70,7 @@ public abstract class ResponseGetter<Type> {
     scanner.useDelimiter("\\A");
     if(scanner.hasNext()) {
       String str = scanner.next();
-      Log.println(Log.DEBUG, "JSON:", str);
+      Log.println(Log.DEBUG, "String value of json JSON:", str);
       return str;
     }
     else{
@@ -80,19 +80,20 @@ public abstract class ResponseGetter<Type> {
   }
   /**convert string value to json value, nullable*/
   protected  JSONObject retrieveDate(InputStream response){
-    JSONObject data = null;
+    JSONObject jsonData = null;
     String result = getString(response);
     try {
-      data = new JSONObject(result);
+      jsonData = new JSONObject(result);
       Log.println(Log.DEBUG, "JSON:", "successfully get json");
     } catch (JSONException e) {
-      Log.w("Error_In_Data", "Fail to create json object");
+      Log.println(Log.ERROR, "Error_In_Data", "Fail to create json object");
       Data_State_History.dataState = DataState.CANNOT_CREATE_JSON;
 //        String error = data.getString("connection_error");
 //        STATE_CHECKER.errorJsonMessage = error;
 //        STATE_CHECKER.dataState = DataState.INVALID_JSON;
     }
-    return data;
+    Log.println(Log.DEBUG, "JSON:", "is Json Data Null? " + String.valueOf(jsonData == null));
+    return jsonData;
   }
   public abstract Type getFormattedData(InputStream result);
 }

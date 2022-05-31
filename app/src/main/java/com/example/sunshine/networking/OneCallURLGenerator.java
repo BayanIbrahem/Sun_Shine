@@ -45,7 +45,7 @@ public class OneCallURLGenerator {
   private boolean unit;
   private Values.Unit tempUnitCurrentValue;
 
-
+  private NeededValues neededDataTypesValues;
   Uri.Builder buildUri;
 
   public OneCallURLGenerator(double longitude, double latitude){
@@ -57,8 +57,11 @@ public class OneCallURLGenerator {
     this.tempUnitCurrentValue = Values.Unit.KELVIN;
   }
   public NeededValues setType(Values.Type... items){
+    if(items.length == 5){
+      return new NeededValues(true, true, true, true, tempUnitCurrentValue);
+    }
     List<Values.Type> arr = new ArrayList<>(5);
-    NeededValues values = new NeededValues(tempUnitCurrentValue);
+    neededDataTypesValues = new NeededValues(tempUnitCurrentValue);
     arr.add(Values.Type.CURR);
     arr.add(Values.Type.MIN);
     arr.add(Values.Type.HOUR);
@@ -66,16 +69,16 @@ public class OneCallURLGenerator {
     arr.add(Values.Type.ALERT);
     for(Values.Type item: items){
       if(item == Values.Type.CURR){
-        values.setCurrent(true);
+        neededDataTypesValues.setCurrent(true);
       }
       if(item == Values.Type.MIN){
-        values.setMinutely(true);
+        neededDataTypesValues.setMinutely(true);
       }
       if(item == Values.Type.HOUR){
-        values.setHourly(true);
+        neededDataTypesValues.setHourly(true);
       }
       if(item == Values.Type.DAY){
-        values.setDaily(true);
+        neededDataTypesValues.setDaily(true);
       }
       arr.remove(item);
     }
@@ -100,7 +103,7 @@ public class OneCallURLGenerator {
       }
     }
     buildUri.appendQueryParameter(ATTR_TYPE, strValue.substring(0, strValue.length()-1));
-    return values;
+    return neededDataTypesValues;
   }
   public void setMode(Values.Mode mode){
     if(this.mode)
@@ -160,5 +163,8 @@ public class OneCallURLGenerator {
     Log.println(Log.DEBUG, "URLBuilder:", str);
     return new URL(str);
 
+  }
+  public NeededValues getNeededDataTypesValues(){
+    return this.neededDataTypesValues.clone();
   }
 }

@@ -1,7 +1,8 @@
 package com.example.sunshine;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.lifecycle.Observer;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -9,6 +10,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -16,17 +19,18 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.sunshine.data.one_call_api.RawDataEntry;
 import com.example.sunshine.data.one_call_api.WeatherDataInfo;
-import com.example.sunshine.enums.*;
+import com.example.sunshine.enums.Values;
 import com.example.sunshine.enums.states.RefreshState;
 import com.example.sunshine.helper_classes.NeededValues;
-import com.example.sunshine.helper_classes.WeatherViewModel;
 import com.example.sunshine.networking.*;
-import com.example.sunshine.threading.ThreadHandling;
 import com.example.sunshine.widgets.recycler_view.RecyclerViewAdapter;
+import com.example.sunshine.widgets.recycler_view.WeatherDataViewModel;
 
+import java.io.Serializable;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
   //recyclerView variables
@@ -39,32 +43,25 @@ public class MainActivity extends AppCompatActivity {
   private Boolean refreshInProgress = false;
   private int refreshState = 0; //0: no refresh required, 1: successes, -1: fail
 
-  //helper_classes variables
-  NeededValues neededDataTypes;
-
-  //threading variables
-  private ThreadHandling threadingHandler;
-
-  //weatherDataVariables
-  private WeatherDataInfo weatherData;
-  private WeatherViewModel weatherViewModel;
+  private WeatherDataViewModel weatherDataViewModel;
 
   //intents and content provider:
   Intent activitySwapIntent;
+
+  private OneCallURLGenerator urlGenerator;
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
+    Bundle state = new Bundle();
 
     initVariablesInOnCreate();
 
-    setViewModelObserver();
-
+    weatherDataViewModel = new ViewModelProvider(this).get(WeatherDataViewModel.class);
+    weatherDataViewModel.getLiveWeatherData().observe(this, liveWeatherData -> {
+      updateUi();
+    });
     setRecyclerViewOptions();
-    completeRecyclerViewOptions();
-
-    organizeDataGet();
-
     initIntentWithBundle();
   }
 
@@ -77,9 +74,10 @@ public class MainActivity extends AppCompatActivity {
   public boolean onOptionsItemSelected(MenuItem item){
     switch (item.getItemId()){
       case R.id.appBarMenu_refresh:
-        organizeDataGet();
+
         break;
       case R.id.appBarMenu_Logcat:
+        automatedToast.resetPinnedToast("View Model Data", true);
         break;
     }
     return true;
@@ -87,48 +85,39 @@ public class MainActivity extends AppCompatActivity {
 
   //private methods <story>:
   private void initVariablesInOnCreate(){
-    //data:
-    weatherData = new WeatherDataInfo();
     //recyclerView
     recyclerView = findViewById(R.id.home_recyclerView);
-    //threading:
-    threadingHandler = new ThreadHandling();
     dataRetrieveStateTextView = findViewById(R.id.home_tv_state);
     //toast:
     automatedToast = new AutomatedToast(this);
-    //viewModel and liveData:
-    weatherViewModel = new ViewModelProvider(this).get(WeatherViewModel.class);
+    //url generator:
+    urlGenerator = new OneCallURLGenerator(0, 0);
   }
 
-  private Observer<WeatherDataInfo> getWeatherViewModelObserverInstance(){
-    return new Observer<WeatherDataInfo>() {
-      @Override
-      public void onChanged(WeatherDataInfo weatherDataInfo) {
-        if(true){
-          recyclerViewAdapter.notifyDataSetChanged();
-        }
+  private void setRecyclerViewDependencies(){
+    //TODO: make the next line cleaner
+    WeatherDataInfo recyclerViewData= weatherDataViewModel.getLiveWeatherData().getValue();
+    for (int i=0; weatherDataViewModel == null; i++) {
+      try {
+        Thread.sleep(1000);
+        Log.println(Log.DEBUG, "one loop occurred...", " round #"+i);
+        recyclerViewData= weatherDataViewModel.getLiveWeatherData().getValue();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
       }
-    };
-  }
-  private void setViewModelObserver(){
-    final Observer<WeatherDataInfo> viewModelObserver = getWeatherViewModelObserverInstance();
-    weatherViewModel.getWeatherDataDetails().observe(this, viewModelObserver);
+    }
+
+    recyclerViewAdapter = new RecyclerViewAdapter(recyclerViewData.getHourlyData(), new ClickListener());
+    recyclerView.setAdapter(recyclerViewAdapter);
+    RecyclerView.LayoutManager recyclerViewLayoutManager = new LinearLayoutManager(this);
+    recyclerView.setLayoutManager(recyclerViewLayoutManager);
+    automatedToast.addPinnedToast("RecyclerView initialized", true);
   }
 
   private void setRecyclerViewOptions(){
     recyclerView.setHasFixedSize(true);
     //TODO: make a subclass of recycler view and over ride adapter method by one that has edited onChange listener
     //https://stackoverflow.com/questions/28217436/how-to-show-an-empty-view-with-a-recyclerview
-  }
-  private void completeRecyclerViewOptions(){
-    LinearLayoutManager layout = new LinearLayoutManager(this);
-    WeatherDataInfo dataEntry = weatherViewModel.getWeatherDataDetails().getValue();
-    recyclerViewAdapter = new RecyclerViewAdapter(dataEntry.getHourlyData(), new ClickListener());
-    this.recyclerView.setAdapter(recyclerViewAdapter);
-    this.recyclerView.setLayoutManager(layout);
-    refreshInProgress = false;
-    refreshState(RefreshState.FINISHED);
-    refreshState = 0;
   }
 
   private void refreshState(RefreshState state){
@@ -155,65 +144,14 @@ public class MainActivity extends AppCompatActivity {
         break;
     }
   }
-  private URL getURLForDataCall(OneCallURLGenerator urlGenerator){
-    urlGenerator.setMode(Values.Mode.JSON);
-    urlGenerator.setLang(Values.Lang.EN);
-    urlGenerator.setUnit(Values.Unit.CELSIUS);
-    neededDataTypes = urlGenerator.setType(Values.Type.HOUR, Values.Type.MIN);
-    Log.d("neddedDataType:", neededDataTypes.toString());
-    urlGenerator.setOffset(10800);
-    try {
-      URL url = urlGenerator.getURL();
-      return url;
       /*new URL("https://api.openweathermap.org/data/2.5/weather?q=London&lat=35&lon=139&appid=ce58ff3b1ee960a325c8aa1544daca90");
        */
       //new URL("https://api.openweathermap.org/data/2.5/onecall?lat=0&lon=0&timezone-offset=10800&/*exclude=current,minutely*/&appid=ce58ff3b1ee960a325c8aa1544daca90");
-    } catch (MalformedURLException e) {
-      return null;
-    }
-  }
-  private Runnable getRequestThreadRunnable(OneCallResponseGetter byteResponse){
-    return new Runnable() {
-      @Override
-      public void run() {
-        weatherData = byteResponse.getFormattedData(byteResponse.getInputStream());
-        if(weatherData != null){
-          refreshState = 1;
-        }
-      }
-    };
-  }
-  private Runnable getRequestResultRunnable(){
-    return new Runnable() {
-      @Override
-      public void run() {
-        weatherViewModel.setWeatherData(weatherData);
-        //refreshRecyclerViewData();
-        completeRecyclerViewOptions();
-      }
-    };
-  }
-  private void getWeatherDataFromSite(OneCallResponseGetter byteResponse){
-    refreshState = -1;
-    byteResponse.setNeededData(neededDataTypes);
-    Runnable task = getRequestThreadRunnable(byteResponse);
-    Runnable uiTask = getRequestResultRunnable();
-    threadingHandler.pushTaskAndResult(task, uiTask, 0, 0);
-  }
-  private void organizeDataGet(){
-    if(refreshInProgress)
-      return;
-    refreshState(RefreshState.IN_PROGRESS);
-    refreshInProgress = true;
-    OneCallURLGenerator urlGenerator = new OneCallURLGenerator(0, 0);
-    OneCallResponseGetter byteResponse = new OneCallResponseGetter(getURLForDataCall(urlGenerator));
-    getWeatherDataFromSite(byteResponse);
-  }
 
-  private void refreshRecyclerViewData(){
-    weatherViewModel.setWeatherData(weatherData);
+  private void updateUi(){
+    //TODO: set the content
+    setRecyclerViewDependencies();
   }
-
 
   private void initIntentWithBundle(){
     //intent:

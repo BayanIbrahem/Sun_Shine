@@ -14,10 +14,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.sunshine.R;
 import com.example.sunshine.data.one_call_api.RawDataEntry;
+import com.example.sunshine.data.one_call_api.WeatherDataInfo;
 
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -52,7 +56,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     return itemsNum;
   }
 
-  public class ViewHolder extends RecyclerView.ViewHolder{
+  protected class ViewHolder extends RecyclerView.ViewHolder{
     ImageView icon;
     TextView date;
     TextView description;
